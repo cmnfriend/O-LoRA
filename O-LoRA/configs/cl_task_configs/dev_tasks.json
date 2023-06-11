@@ -1,0 +1,78 @@
+{
+    "SC": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "amazon_100_1"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "yelp_100_1"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "SST-2_40_1" 
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "IMDB_40_1"
+        }
+    ],
+    "TC": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "agnews_80_1"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "dbpedia_280_1"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "yahoo_200_1"
+        }        
+    ],
+    "NLI": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "MNLI_60_1"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "RTE_40_1"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "CB_60_1"
+        }       
+    ],
+    "QQP": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "QQP_40_1"
+        }   
+    ],
+    "WiC": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "WiC_40_1"
+        }   
+    ],
+    "MultiRC": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "MultiRC_40_1"
+        }   
+    ],
+    "COPA": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "COPA_40_1"
+        }   
+    ],
+    "BoolQA": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "BoolQA_40_1"
+        }   
+    ]
+}

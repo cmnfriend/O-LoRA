@@ -1,0 +1,8 @@
+{
+    "TC":[
+        {
+            "sampling strategy": "full",
+            "dataset name": "yahoo_10000"
+        }
+    ]
+}

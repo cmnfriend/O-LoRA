@@ -1,0 +1,23 @@
+{
+  "NLI": [
+    {"instruction_type": "zero-shot", "instruction": "What is the logical relationship between the \"sentence 1\" and the \"sentence 2\"? Choose one from the option.\n"}
+  ],
+  "QQP": [
+    {"instruction_type": "zero-shot", "instruction": "Whether the \"first sentence\" and the \"second sentence\" have the same meaning? Choose one from the option.\n"}
+  ],
+  "SC": [
+    {"instruction_type": "zero-shot", "instruction": "What is the sentiment of the following paragraph? Choose one from the option.\n"}
+  ],
+  "TC": [
+    {"instruction_type": "zero-shot", "instruction": "What is the topic of the following paragraph? Choose one from the option.\n"}
+  ],
+  "BoolQA":[
+    {"instruction_type": "zero-shot", "instruction": "According to the following passage, is the question true or false? Choose one from the option.\n"}
+  ],
+  "MultiRC":[
+    {"instruction_type": "zero-shot", "instruction": "According to the following passage and question, is the candidate answer true or false? Choose one from the option.\n"}
+  ],
+  "WiC":[
+    {"instruction_type": "zero-shot", "instruction": "Given a word and two sentences, whether the word is used with the same sense in both sentence? Choose one from the option.\n"}
+  ]
+}
