@@ -36,8 +36,6 @@ from filelock import FileLock
 from transformers import (
     AutoConfig,
     AutoModel,
-    AutoModelForSeq2SeqLM,
-    AutoModelForCausalLM,  # add
     AutoTokenizer,
     HfArgumentParser,
     Seq2SeqTrainingArguments,
@@ -47,8 +45,6 @@ from transformers.trainer_utils import get_last_checkpoint
 from peft import get_peft_config, get_peft_model, LoraConfig, TaskType, PeftModel, PeftConfig # add
 
 from model.bloom import BloomForCausalLM_WithLoss
-from model.codegen import CodeGenForCausalLM_WithLoss
-from model.gpt_neox import GPTNeoXForCausalLM_WithLoss
 from model.llama import LlamaForCausalLM_with_lossmask
 
 from uie_collator import DataCollatorForUIE
@@ -228,14 +224,6 @@ class DataTrainingArguments:
         default=False,
         metadata={"help": "whether to preappend dataset name before the task input."}
     )
-    common_dataset_name: Optional[str] = field(
-        default=None,
-        metadata={"help": "common dataset name for zero shot."}
-    )
-    over_sampling: Optional[str] = field(
-        default=False,
-        metadata={"help": "Whether to over sampling the dataset to max_num_instances_per_task"}
-    )
     # added for AutoCL
     average_accuracy_list: str = field(
         default='[]', metadata={"help": "average accuracy list for each step."}
@@ -322,10 +310,8 @@ def main():
         cache_dir=data_cache_dir,  # for debug, change dataset size, otherwise open it
         max_num_instances_per_task=data_args.max_num_instances_per_task,
         max_num_instances_per_eval_task=data_args.max_num_instances_per_eval_task,
-        num_examples=data_args.num_examples,
-        over_sampling=data_args.over_sampling
+        num_examples=data_args.num_examples
     )
-    raw_datasets.cleanup_cache_files()
 
     # Load pretrained model and tokenizer
     #
@@ -375,15 +361,6 @@ def main():
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = 'left'
-    elif 'codegen' in model_args.model_name_or_path.lower():
-        model_class = CodeGenForCausalLM_WithLoss
-        tokenizer.pad_token = tokenizer.eos_token
-        tokenizer.padding_side = 'left'
-    elif 'neox' in model_args.model_name_or_path.lower():
-        model_class = GPTNeoXForCausalLM_WithLoss
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
-        tokenizer.padding_side = 'left'
     elif 'llama' in model_args.model_name_or_path.lower():  # add llama
         model_class = transformers.LlamaForCausalLM
         tokenizer.padding_side = 'left'
@@ -425,24 +402,10 @@ def main():
         model.generation_config.eos_token_id = 2
         model.generation_config.pad_token_id = 1
 
-    # # copy lora_A/B to lorapre_A/B if lora_A/B is trainable
-    # for k,v in model.named_parameters(): 
-    #     if "lora_A" in k: 
-    #         for k_, v_ in model.named_parameters(): 
-    #             if "lorapre_A" in k_ and k.split("lora_A")[0] == k_.split("lorapre_A")[0]:
-    #                 v_ = v_.copy_(v)
-    #                 v_.detach_()
-    #                 break # target modules have been matched
-    #     elif "lora_B" in k: 
-    #         for k_, v_ in model.named_parameters(): 
-    #             if "lorapre_B" in k_ and k.split("lora_B")[0] == k_.split("lorapre_B")[0]:
-    #                 v_ = v_.copy_(v)
-    #                 v_.detach_()
-    #                 break # target modules have been matched
-
     # fix lora_A/B (bases of previous LoRA parameters, loaded in "load_adapter"[peft_momdel.py])
     # fine-tune loranew_A/B (initialized in "update_layer"[lora.py])
-    # optional: lora_A/B is trainable but should not move too far from lorapre_A/B (constrained in "training_step"[uie_trainer_lora.py])
+    # optional: lora_A/B is trainable but should not move too far from lorapre_A/B
+    # (constrained in "training_step"[uie_trainer_lora.py])
     for name, param in model.named_parameters():
         if name.find("loranew_") != -1:
             param.requires_grad = True
@@ -470,12 +433,6 @@ def main():
                 f" position encodings. Consider either reducing `--max_source_length` to {model.config.max_position_embeddings} or to automatically "
                 "resize the model's position encodings by passing `--resize_position_embeddings`."
             )
-
-    if training_args.label_smoothing_factor > 0 and not hasattr(model, "prepare_decoder_input_ids_from_labels"):
-        logger.warning(
-            "label_smoothing is enabled but the `prepare_decoder_input_ids_from_labels` method is not defined for"
-            f"`{model.__class__.__name__}`. This will lead to loss being calculated twice and will take up more memory"
-        )
 
     if training_args.do_train:
         if "train" not in raw_datasets:
@@ -510,7 +467,6 @@ def main():
         pad_to_multiple_of=8 if training_args.fp16 else None,
         add_task_name=data_args.add_task_name,
         add_dataset_name=data_args.add_dataset_name,
-        common_dataset_name=data_args.common_dataset_name,
         num_examples=data_args.num_examples,
         input_record_file=data_args.input_record_file
     )
@@ -563,7 +519,6 @@ def main():
 
     # Training
     # 训练epoch数，按照 num_train_epochs 传入，在trainer中解析
-    # TODO, train debug, bloomz, flan-t5
     if training_args.do_train:
         checkpoint = None
         if training_args.resume_from_checkpoint is not None:
