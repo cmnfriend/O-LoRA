@@ -22,6 +22,7 @@ import logging
 import os
 import sys
 import json
+import time
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -112,6 +113,13 @@ class ModelArguments:
         metadata={
             "help": "Whether to automatically resize the position embeddings if `max_source_length` exceeds "
                     "the model's position embeddings."
+        },
+    )
+    # added for AutoCL
+    lora_dim: Optional[int] = field(
+        default=8,
+        metadata={
+            "help": "Intrinsic dimension of the latent space."
         },
     )
 
@@ -228,6 +236,13 @@ class DataTrainingArguments:
         default=False,
         metadata={"help": "Whether to over sampling the dataset to max_num_instances_per_task"}
     )
+    # added for AutoCL
+    average_accuracy_list: str = field(
+        default='[]', metadata={"help": "average accuracy list for each step."}
+    )
+    sequential_results_file: str = field(
+        default=None, metadata={"help": "file to record sequential results"}
+    )
 
 
 @dataclass
@@ -340,7 +355,6 @@ def main():
         tokenizer.bos_token_id = 1
         tokenizer.eos_token_id = 2
         tokenizer.pad_token_id = 1
-
     else: # load original config
         config = AutoConfig.from_pretrained(
             model_args.config_name if model_args.config_name else model_args.model_name_or_path,
@@ -370,11 +384,9 @@ def main():
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = 'left'
-
     elif 'llama' in model_args.model_name_or_path.lower():  # add llama
         model_class = transformers.LlamaForCausalLM
         tokenizer.padding_side = 'left'
-
     else:
         model_class = AutoModel
 
@@ -402,7 +414,7 @@ def main():
         # Some modification is expected to make these arguments optional.
         # Fow now, just for the purpose of TESTING.
         peft_config = LoraConfig(
-            task_type=TaskType.SEQ_2_SEQ_LM, inference_mode=False, r=8, lora_alpha=32, lora_dropout=0.1
+            task_type=TaskType.SEQ_2_SEQ_LM, inference_mode=False, r=model_args.lora_dim, lora_alpha=32, lora_dropout=0.1
         )
         model = get_peft_model(model, peft_config)
 
@@ -589,6 +601,8 @@ def main():
     repetition_penalty = data_args.repetition_penalty
 
     if training_args.do_predict:
+        history_metrics_str = data_args.average_accuracy_list
+        history_metrics = json.loads(history_metrics_str)
         logger.info("*** Prediction ***")
         logger.info("*** Loading CheckPoint ***")
 
@@ -614,16 +628,52 @@ def main():
         trainer.save_metrics("predict", metrics)
         all_metrics.update(metrics)
 
-    if training_args.do_demo:
-        logger.info("Serving the model as a demo...")
-        user_input = ''
-        while True:
-            user_input = input("Please enter your input to the model, or enter 'quit' to exit: ")
-            if user_input.lower() == "quit":
-                break
-            inputs = tokenizer([user_input], return_tensors="pt")
-            _, preds, _ = trainer.prediction_step(model, inputs=inputs, prediction_loss_only=False)
-            print(f"Model generates: {tokenizer.decode(preds[0], skip_special_tokens=True)}\n\n")
+        # update history metrics and out to data_args.sequential_results_file
+        out_dir, results_file_name = os.path.split(data_args.sequential_results_file)
+        # create an identify file for output dir as a Lock
+        identify_file_path = os.path.join(out_dir, "identify_for_cl")
+        while os.path.exists(identify_file_path):
+            time.sleep(1)
+        logger.info("Create lock file {}, start out to {}".format(identify_file_path, data_args.sequential_results_file))
+        with open(identify_file_path, 'w') as file:
+            pass
+
+        # format of output
+        # {
+        #     "training_params": {},
+        #     "average_metrics": [0.5, 0.1],
+        #     "test_result": [
+        #         ['task_1', 50],
+        #         ['task_2', 43]
+        #     ],
+        #     "model_save_path": "path/to/model"
+        # }
+
+        output_info = {
+            "training_params": {
+                "lamda_1": training_args.lamda_1,
+                "lamda_2": training_args.lamda_2,
+                "learning_rate": training_args.learning_rate,
+                "train_bs": training_args.per_device_train_batch_size
+            },
+            "average_metrics": history_metrics,
+            "test_result": [],
+            "model_save_path": os.path.join(training_args.output_dir, 'adapter')
+        }
+
+        for key, value in metrics.items():
+            if "predict_exact_match_for_" in key:
+                task_name = key.split("predict_exact_match_for_")[1]
+                output_info["test_result"].append([task_name, value])
+        task_metrics = [item[1] for item in output_info["test_result"]]
+        average_metrics = sum(task_metrics) / len(task_metrics)
+        output_info["average_metrics"].append(average_metrics)
+
+        with open(data_args.sequential_results_file, "a+") as f:
+            f.write(json.dumps(output_info) + "\n")
+
+        os.remove(identify_file_path)
+        logger.info("Clear lock file {}, finish out to {}".format(identify_file_path, data_args.sequential_results_file))
 
     return results
 
