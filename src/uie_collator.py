@@ -6,7 +6,7 @@ from transformers.data.data_collator import *
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_DECODER_MODELS = ['codegen', 'bloomz', 'gpt-neox']
+SUPPORTED_DECODER_MODELS = ['codegen', 'llama']
 SUPPORTED_SEQ2SEQ_MODELS = ['t5', 'flan-t5']
 
 
@@ -60,7 +60,7 @@ class DataCollatorForUIE:
         if self.add_task_name:
             prefix += "Task:" + instance['Task'] + '\n'
         if self.add_dataset_name:
-            ds_name = self.common_dataset_name if self.common_dataset_name else instance['Dataset']
+            ds_name = instance['Dataset']
             prefix = prefix + "Dataset:"
             prefix = prefix + ds_name + '\n' if prefix else instance['Dataset'] + '\n'
         if prefix:
