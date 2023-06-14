@@ -13,38 +13,6 @@ import os
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-TASK_CONFIGS_DIR = '/workspace/AutoCL/configs/auto_CL_configs'
-
-# task training and testing configs
-TASK_CONFIGS = {
-    "BoolQA_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "BoolQA_40_1")},
-    "COPA_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "COPA_40_1")},
-    "MultiRC_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "MultiRC_40_1")},
-    "QQP_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "QQP_40_1")},
-
-}
-
-# params list for each task
-TASK_PARAMS = {
-    "BoolQA_40_1": [
-        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.1, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1}
-    ],
-    "COPA_40_1":  [
-        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1}
-    ],
-    "MultiRC_40_1": [
-        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1}
-    ],
-    "QQP_40_1": [
-        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1}
-    ]
-}
-
 # add average accuracy list to save history results
 CMD_TEMPLATE = "nohup /opt/conda/bin/python src/run_uie_lora.py \
     --do_train \
@@ -69,7 +37,6 @@ CMD_TEMPLATE = "nohup /opt/conda/bin/python src/run_uie_lora.py \
     --max_num_instances_per_eval_task 200 \
     --add_task_name True \
     --add_dataset_name True \
-    --num_examples 0 \
     --overwrite_output_dir \
     --overwrite_cache \
     --lr_scheduler_type constant \
@@ -90,11 +57,21 @@ CMD_TEMPLATE = "nohup /opt/conda/bin/python src/run_uie_lora.py \
 # IO settings
 DATA_DIR = "/workspace/CL_Benchmark"
 INIT_MODEL = "/workspace/MODELS/t5-small"
-RESULT_FILE = "/workspace/AutoCL/autoCL_result.txt"
+RESULT_FILE = "/workspace/O-LoRA/autoCL_result.txt"
 MODEL_OUTPUT_DIR = "/workspace/AutoCL_MODELS/"
-INSTRUCTION_FILE = "/workspace/AutoCL/configs/instruction_config_cl.json"
-LOG_DIR = "/workspace/AutoCL/logs/"
+INSTRUCTION_FILE = "/workspace/O-LoRA/configs/instruction_config_cl.json"
+LOG_DIR = "/workspace/O-LoRA/logs/"
 INSTRUCTION_STRATEGY = "single"
+TASK_CONFIGS_DIR = '/workspace/O-LoRA/configs/auto_CL_configs'
+
+# task training and testing configs
+TASK_CONFIGS = {
+    "BoolQA_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "BoolQA_40_1")},
+    "COPA_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "COPA_40_1")},
+    "MultiRC_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "MultiRC_40_1")},
+    "QQP_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "QQP_40_1")},
+
+}
 
 
 # general params settings
@@ -106,6 +83,27 @@ TEST_BATCH_SIZE = 8
 MAX_GPU_COUNT = 6
 GPU_THRESHOLD = 0.8
 TOP_K = 2
+
+# params list for each task
+TASK_PARAMS = {
+    "BoolQA_40_1": [
+        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
+        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1},
+        {"lamda_1": 0.1, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1}
+    ],
+    "COPA_40_1":  [
+        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
+        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1}
+    ],
+    "MultiRC_40_1": [
+        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
+        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1}
+    ],
+    "QQP_40_1": [
+        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
+        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1}
+    ]
+}
 
 
 class Engine:

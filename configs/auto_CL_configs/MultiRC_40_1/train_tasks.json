@@ -1,0 +1,8 @@
+{
+    "MultiRC":[
+        {
+            "sampling strategy": "random",
+            "dataset name": "MultiRC_40_1"
+        }
+    ]
+}

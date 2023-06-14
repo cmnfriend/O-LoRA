@@ -1,0 +1,8 @@
+{
+    "BoolQA":[
+        {
+            "sampling strategy": "random",
+            "dataset name": "BoolQA_40_1"
+        }
+    ]
+}

@@ -36,6 +36,7 @@ from filelock import FileLock
 from transformers import (
     AutoConfig,
     AutoModel,
+    AutoModelForSeq2SeqLM,
     AutoTokenizer,
     HfArgumentParser,
     Seq2SeqTrainingArguments,
@@ -45,7 +46,7 @@ from transformers.trainer_utils import get_last_checkpoint
 from peft import get_peft_config, get_peft_model, LoraConfig, TaskType, PeftModel, PeftConfig # add
 
 from model.bloom import BloomForCausalLM_WithLoss
-from model.llama import LlamaForCausalLM_with_lossmask
+# from model.llama import LlamaForCausalLM_with_lossmask
 
 from uie_collator import DataCollatorForUIE
 from uie_dataset_lora import gen_cache_path
@@ -365,7 +366,8 @@ def main():
         model_class = transformers.LlamaForCausalLM
         tokenizer.padding_side = 'left'
     else:
-        model_class = AutoModel
+        # model_class = AutoModel
+        model_class = AutoModelForSeq2SeqLM
 
     if 'adapter' in model_args.model_name_or_path: # add lora-adapter to the original model
         model = model_class.from_pretrained(config.base_model_name_or_path)
