@@ -34,6 +34,7 @@ import transformers
 from filelock import FileLock
 from transformers import (
     AutoConfig,
+    AutoModel,
     AutoModelForSeq2SeqLM,
     AutoModelForCausalLM,  # add
     AutoTokenizer,
@@ -47,6 +48,7 @@ from peft import get_peft_config, get_peft_model, LoraConfig, TaskType, PeftMode
 from model.bloom import BloomForCausalLM_WithLoss
 from model.codegen import CodeGenForCausalLM_WithLoss
 from model.gpt_neox import GPTNeoXForCausalLM_WithLoss
+from model.llama import LlamaForCausalLM_with_lossmask
 
 from uie_collator import DataCollatorForUIE
 from uie_dataset_lora import gen_cache_path
@@ -318,6 +320,27 @@ def main():
     if 'adapter' in model_args.model_name_or_path: # load lora-config
         config = PeftConfig.from_pretrained(model_args.model_name_or_path)
         tokenizer = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
+    elif 'llama' in model_args.model_name_or_path.lower():
+        config = AutoConfig.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
+        config.bos_token_id = 1
+        config.eos_token_id = 2
+        config.pad_token_id = 1
+        tokenizer = transformers.LlamaTokenizer.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir = model_args.cache_dir,
+            use_fast = model_args.use_fast_tokenizer,
+            revision = model_args.model_revision,
+            use_auth_token = True if model_args.use_auth_token else None,
+        )
+        tokenizer.bos_token_id = 1
+        tokenizer.eos_token_id = 2
+        tokenizer.pad_token_id = 1
+
     else: # load original config
         config = AutoConfig.from_pretrained(
             model_args.config_name if model_args.config_name else model_args.model_name_or_path,
@@ -347,12 +370,25 @@ def main():
         if tokenizer.pad_token is None:
             tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = 'left'
+
+    elif 'llama' in model_args.model_name_or_path.lower():  # add llama
+        model_class = transformers.LlamaForCausalLM
+        tokenizer.padding_side = 'left'
+
     else:
-        model_class = AutoModelForSeq2SeqLM
+        model_class = AutoModel
 
     if 'adapter' in model_args.model_name_or_path: # add lora-adapter to the original model
         model = model_class.from_pretrained(config.base_model_name_or_path)
         model = PeftModel.from_pretrained(model, model_args.model_name_or_path)
+    elif 'llama' in model_args.model_name_or_path.lower():
+        model = model_class.from_pretrained(
+            model_args.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None
+        )
     else:
         model = model_class.from_pretrained(
             model_args.model_name_or_path,
@@ -371,6 +407,11 @@ def main():
         model = get_peft_model(model, peft_config)
 
     model.resize_token_embeddings(len(tokenizer))
+
+    if 'llama' in model_args.model_name_or_path.lower():
+        model.generation_config.bos_token_id = 1
+        model.generation_config.eos_token_id = 2
+        model.generation_config.pad_token_id = 1
 
     # # copy lora_A/B to lorapre_A/B if lora_A/B is trainable
     # for k,v in model.named_parameters(): 
