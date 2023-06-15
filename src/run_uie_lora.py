@@ -37,6 +37,7 @@ from transformers import (
     AutoConfig,
     AutoModel,
     AutoModelForSeq2SeqLM,
+    AutoModelForCausalLM,  # add
     AutoTokenizer,
     HfArgumentParser,
     Seq2SeqTrainingArguments,
@@ -46,7 +47,7 @@ from transformers.trainer_utils import get_last_checkpoint
 from peft import get_peft_config, get_peft_model, LoraConfig, TaskType, PeftModel, PeftConfig # add
 
 from model.bloom import BloomForCausalLM_WithLoss
-# from model.llama import LlamaForCausalLM_with_lossmask
+from model.llama import LlamaForCausalLM_with_lossmask
 
 from uie_collator import DataCollatorForUIE
 from uie_dataset_lora import gen_cache_path
@@ -313,6 +314,7 @@ def main():
         max_num_instances_per_eval_task=data_args.max_num_instances_per_eval_task,
         num_examples=data_args.num_examples
     )
+    raw_datasets.cleanup_cache_files()
 
     # Load pretrained model and tokenizer
     #
@@ -363,10 +365,9 @@ def main():
             tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = 'left'
     elif 'llama' in model_args.model_name_or_path.lower():  # add llama
-        model_class = transformers.LlamaForCausalLM
+        model_class = LlamaForCausalLM_with_lossmask
         tokenizer.padding_side = 'left'
     else:
-        # model_class = AutoModel
         model_class = AutoModelForSeq2SeqLM
 
     if 'adapter' in model_args.model_name_or_path: # add lora-adapter to the original model
@@ -376,10 +377,15 @@ def main():
         model = model_class.from_pretrained(
             model_args.model_name_or_path,
             from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
             cache_dir=model_args.cache_dir,
             revision=model_args.model_revision,
             use_auth_token=True if model_args.use_auth_token else None
         )
+        peft_config = LoraConfig(
+            task_type=TaskType.SEQ_2_SEQ_LM, inference_mode=False, r=model_args.lora_dim, lora_alpha=32, lora_dropout=0.1
+        )
+        model = get_peft_model(model, peft_config)
     else:
         model = model_class.from_pretrained(
             model_args.model_name_or_path,
