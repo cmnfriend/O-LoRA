@@ -23,6 +23,8 @@ import os
 import sys
 import json
 import time
+import gc
+import torch
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -250,6 +252,12 @@ class UIETrainingArguments(Seq2SeqTrainingArguments):
     lamda_2: float = field(default = 0)
 
 
+def torch_cleen():
+    print(' * Cleaning...')
+    gc.collect()
+    torch.cuda.empty_cache()
+    torch.cuda.reset_max_memory_allocated()  
+
 def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
@@ -383,7 +391,7 @@ def main():
             use_auth_token=True if model_args.use_auth_token else None
         )
         peft_config = LoraConfig(
-            task_type=TaskType.SEQ_2_SEQ_LM, inference_mode=False, r=model_args.lora_dim, lora_alpha=32, lora_dropout=0.1
+            task_type=TaskType.CAUSAL_LM, inference_mode=False, r=model_args.lora_dim, lora_alpha=32, lora_dropout=0.1
         )
         model = get_peft_model(model, peft_config)
     else:
@@ -522,7 +530,7 @@ def main():
         compute_metrics=compute_rouge_metrics,
         callbacks=[DenserEvalCallback] if training_args.denser_evaluation else None
     )
-
+    torch_cleen()
     all_metrics = {"run_name": training_args.run_name}
 
     # Training
@@ -533,7 +541,9 @@ def main():
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
+        torch_cleen()
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
+        torch_cleen()
 
         peft_model_id = training_args.output_dir + "/adapter"
         trainer.model.save_pretrained(peft_model_id)  

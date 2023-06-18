@@ -138,3 +138,5 @@ exp.py
 
 todo
 img/
+.lock
+*.record

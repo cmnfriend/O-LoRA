@@ -19,12 +19,18 @@ port=$(shuf -i25000-30000 -n1)
 # in tmux
 # bash scripts/train_llama_lora.sh 2>&1 | tee -a ./logs_and_output/llama/output/1
 
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --master_port $port src/run_uie_lora.py \
+
+
+
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5
+# accelerate launch --config_file configs/ds_configs/exp.yaml \
+deepspeed --master_port $port \
+   src/run_uie_lora.py \
    --do_train \
    --do_predict \
    --predict_with_generate \
-   --model_name_or_path /root/llama-7b-hf \
-   --data_dir /root/CL_Benchmark \
+   --model_name_or_path decapoda-research/llama-7b-hf \
+   --data_dir /mnt/data/user/xia_han/dataset/CL_Benchmark \
    --task_config_dir configs/cl_task_configs \
    --instruction_file configs/instruction_config_cl.json \
    --instruction_strategy single \
@@ -35,7 +41,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --master_port $port src/run_uie_l
    --gradient_accumulation_steps 8 \
    --learning_rate 1e-03 \
    --num_train_epochs 1 \
-   --deepspeed configs/ds_configs/stage3.config \
+   --deepspeed configs/ds_configs/stage2.config \
    --run_name llama-experiment-olora \
    --max_source_length 512 \
    --max_target_length 50 \
