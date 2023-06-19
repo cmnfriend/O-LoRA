@@ -3,9 +3,7 @@ set -x
 
 export CUDA_DEVICE_ORDER="PCI_BUS_ID"
 export TRANSFORMERS_CACHE=/root/.cache/huggingface
-
 export CUDA_LAUNCH_BLOCKING=1
-
 port=$(shuf -i25000-30000 -n1)
 
 # T5-large + LoRA
@@ -19,46 +17,58 @@ port=$(shuf -i25000-30000 -n1)
 # in tmux
 # bash scripts/train_llama_lora.sh 2>&1 | tee -a ./logs_and_output/llama/output/1
 
+model_name_or_path=decapoda-research/llama-7b-hf
 
+order=1
+for step in 1 2 3 4
+do
+   output_dir=logs_and_output/order-$order/$step
 
+   python configs/llama_task_configs/generate.py $order $step
 
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5
-# accelerate launch --config_file configs/ds_configs/exp.yaml \
-deepspeed --master_port $port \
-   src/run_uie_lora.py \
-   --do_train \
-   --do_predict \
-   --predict_with_generate \
-   --model_name_or_path decapoda-research/llama-7b-hf \
-   --data_dir /mnt/data/user/xia_han/dataset/CL_Benchmark \
-   --task_config_dir configs/cl_task_configs \
-   --instruction_file configs/instruction_config_cl.json \
-   --instruction_strategy single \
-   --output_dir ./logs_and_output/llama/output/1 \
-   --input_record_file llama.record \
-   --per_device_train_batch_size 1 \
-   --per_device_eval_batch_size 4 \
-   --gradient_accumulation_steps 8 \
-   --learning_rate 1e-03 \
-   --num_train_epochs 1 \
-   --deepspeed configs/ds_configs/stage2.config \
-   --run_name llama-experiment-olora \
-   --max_source_length 512 \
-   --max_target_length 50 \
-   --generation_max_length 50 \
-   --max_num_instances_per_task 10000 \
-   --max_num_instances_per_eval_task 200 \
-   --add_task_name True \
-   --add_dataset_name True \
-   --num_examples 0 \
-   --overwrite_output_dir \
-   --overwrite_cache \
-   --lr_scheduler_type constant \
-   --warmup_steps 0 \
-   --logging_strategy steps \
-   --logging_steps 10 \
-   --evaluation_strategy no \
-   --save_strategy no \
-   --save_steps 1500 \
-   --lamda_1 0.5 \
-   --lamda_2 0
+   export CUDA_VISIBLE_DEVICES=`gpu_monitor.py -n 6 'echo $CUDA_VISIBLE_DEVICES'`
+   deepspeed --master_port $port \
+      src/run_uie_lora.py \
+      --do_train \
+      --do_predict \
+      --predict_with_generate \
+      --model_name_or_path $model_name_or_path \
+      --data_dir /mnt/data/user/xia_han/dataset/CL_Benchmark \
+      --task_config_dir configs/llama_task_configs \
+      --instruction_file configs/instruction_config_cl.json \
+      --instruction_strategy single \
+      --output_dir $output_dir \
+      --input_record_file llama.record \
+      --per_device_train_batch_size 1 \
+      --per_device_eval_batch_size 4 \
+      --gradient_accumulation_steps 8 \
+      --learning_rate 1e-03 \
+      --num_train_epochs 1 \
+      --deepspeed configs/ds_configs/stage2.config \
+      --run_name llama-experiment-olora \
+      --max_source_length 512 \
+      --max_target_length 50 \
+      --generation_max_length 50 \
+      --max_num_instances_per_task 10000 \
+      --max_num_instances_per_eval_task 200 \
+      --add_task_name True \
+      --add_dataset_name True \
+      --num_examples 0 \
+      --overwrite_output_dir \
+      --overwrite_cache \
+      --lr_scheduler_type constant \
+      --warmup_steps 0 \
+      --logging_strategy steps \
+      --logging_steps 10 \
+      --evaluation_strategy no \
+      --save_strategy no \
+      --save_steps 1500 \
+      --lamda_1 0.5 \
+      --lamda_2 0
+      
+      if [ $? -ne 0 ]
+      then 
+         break
+      fi
+      model_name_or_path=$output_dir
+done

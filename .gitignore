@@ -140,3 +140,4 @@ todo
 img/
 .lock
 *.record
+logs_and_output/
