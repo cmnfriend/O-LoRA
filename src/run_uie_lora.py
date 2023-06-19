@@ -252,7 +252,7 @@ class UIETrainingArguments(Seq2SeqTrainingArguments):
     lamda_2: float = field(default = 0)
 
 
-def torch_cleen():
+def torch_clean():
     print(' * Cleaning...')
     gc.collect()
     torch.cuda.empty_cache()
@@ -530,7 +530,7 @@ def main():
         compute_metrics=compute_rouge_metrics,
         callbacks=[DenserEvalCallback] if training_args.denser_evaluation else None
     )
-    torch_cleen()
+    torch_clean()
     all_metrics = {"run_name": training_args.run_name}
 
     # Training
@@ -541,9 +541,9 @@ def main():
             checkpoint = training_args.resume_from_checkpoint
         elif last_checkpoint is not None:
             checkpoint = last_checkpoint
-        torch_cleen()
+        torch_clean()
         train_result = trainer.train(resume_from_checkpoint=checkpoint)
-        torch_cleen()
+        torch_clean()
 
         peft_model_id = training_args.output_dir + "/adapter"
         trainer.model.save_pretrained(peft_model_id)  
