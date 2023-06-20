@@ -331,7 +331,16 @@ def main():
     # download model & vocab.
     if 'adapter' in model_args.model_name_or_path: # load lora-config
         config = PeftConfig.from_pretrained(model_args.model_name_or_path)
-        tokenizer = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
+        if 'llama' in model_args.model_name_or_path.lower():
+            tokenizer = transformers.LlamaTokenizer.from_pretrained(config.base_model_name_or_path)
+            config.bos_token_id = 1
+            config.eos_token_id = 2
+            config.pad_token_id = 1
+            tokenizer.bos_token_id = 1
+            tokenizer.eos_token_id = 2
+            tokenizer.pad_token_id = 1
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
     elif 'llama' in model_args.model_name_or_path.lower():
         config = AutoConfig.from_pretrained(
             model_args.model_name_or_path,

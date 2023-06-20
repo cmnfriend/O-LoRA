@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -ex
 
 export CUDA_DEVICE_ORDER="PCI_BUS_ID"
 export TRANSFORMERS_CACHE=/root/.cache/huggingface
@@ -17,23 +17,23 @@ port=$(shuf -i25000-30000 -n1)
 # in tmux
 # bash scripts/train_llama_lora.sh 2>&1 | tee -a ./logs_and_output/llama/output/1
 
-model_name_or_path=decapoda-research/llama-7b-hf
+model_name_or_path=~/MODELS/llama-7b-hf
 
 order=1
 for step in 1 2 3 4
 do
-   output_dir=logs_and_output/order-$order/$step
+   output_dir=logs_and_output/llama-order-$order/$step
 
    python configs/llama_task_configs/generate.py $order $step
-
-   export CUDA_VISIBLE_DEVICES=`gpu_monitor.py -n 6 'echo $CUDA_VISIBLE_DEVICES'`
+   export CUDA_VISIBLE_DEVICES=0,1,2,3
+   #export CUDA_VISIBLE_DEVICES=`gpu_monitor.py -n 6 'echo $CUDA_VISIBLE_DEVICES'`
    deepspeed --master_port $port \
       src/run_uie_lora.py \
       --do_train \
       --do_predict \
       --predict_with_generate \
       --model_name_or_path $model_name_or_path \
-      --data_dir /mnt/data/user/xia_han/dataset/CL_Benchmark \
+      --data_dir CL_Benchmark \
       --task_config_dir configs/llama_task_configs \
       --instruction_file configs/instruction_config_cl.json \
       --instruction_strategy single \
@@ -56,7 +56,6 @@ do
       --num_examples 0 \
       --overwrite_output_dir \
       --overwrite_cache \
-      --lr_scheduler_type constant \
       --warmup_steps 0 \
       --logging_strategy steps \
       --logging_steps 10 \
@@ -64,11 +63,13 @@ do
       --save_strategy no \
       --save_steps 1500 \
       --lamda_1 0.5 \
-      --lamda_2 0
+      --lamda_2 0 \
+      --lora_dim 8 \
+      --sequential_results_file $output_dir/results.txt
       
       if [ $? -ne 0 ]
       then 
          break
       fi
-      model_name_or_path=$output_dir
+      model_name_or_path=$output_dir/adapter
 done

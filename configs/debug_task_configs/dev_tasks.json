@@ -1,0 +1,8 @@
+{
+    "TC": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "dbpedia_280_1"
+        }
+    ]
+}
