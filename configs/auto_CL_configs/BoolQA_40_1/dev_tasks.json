@@ -1,26 +1,2 @@
 {
-    "QQP": [
-        {
-            "sampling strategy": "full",
-            "dataset name": "QQP_40_1"
-        }   
-    ],
-    "MultiRC": [
-        {
-            "sampling strategy": "full",
-            "dataset name": "MultiRC_40_1"
-        }   
-    ],
-    "COPA": [
-        {
-            "sampling strategy": "full",
-            "dataset name": "COPA_40_1"
-        }   
-    ],
-    "BoolQA": [
-        {
-            "sampling strategy": "full",
-            "dataset name": "BoolQA_40_1"
-        }   
-    ]
 }
