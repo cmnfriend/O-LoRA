@@ -2,7 +2,7 @@
     "TC":[
         {
             "sampling strategy": "full",
-            "dataset name": "yahoo"
+            "dataset name": "dbpedia"
         }
     ]
 }

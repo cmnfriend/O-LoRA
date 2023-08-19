@@ -81,6 +81,7 @@ class Detector:
         return rank_results[:top_k]
     
     def check(self, params_num, parmas_results):
+        params_num = 8 #
         if len(parmas_results) == params_num:
             return True
         else:

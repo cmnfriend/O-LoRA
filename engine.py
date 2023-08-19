@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 # add average accuracy list to save history results
-CMD_TEMPLATE = "nohup /opt/conda/bin/python src/run_uie_lora.py \
+CMD_TEMPLATE = "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 nohup deepspeed src/run_uie_lora.py \
     --do_train \
     --do_predict \
     --predict_with_generate \
@@ -55,54 +55,47 @@ CMD_TEMPLATE = "nohup /opt/conda/bin/python src/run_uie_lora.py \
 
 
 # IO settings
-DATA_DIR = "/workspace/CL_Benchmark"
-INIT_MODEL = "/workspace/MODELS/t5-small"
-RESULT_FILE = "/workspace/O-LoRA/autoCL_result.txt"
-MODEL_OUTPUT_DIR = "/workspace/AutoCL_MODELS/"
-INSTRUCTION_FILE = "/workspace/O-LoRA/configs/instruction_config_cl.json"
-LOG_DIR = "/workspace/O-LoRA/logs/"
+DATA_DIR = "/root/CL_Benchmark"
+INIT_MODEL = "/root/MODELS/t5-large"
+RESULT_FILE = "/root/O-LoRA-main/autoCL_result.txt"
+MODEL_OUTPUT_DIR = "/root/AutoCL_MODELS/"
+INSTRUCTION_FILE = "/root/O-LoRA-main/configs/instruction_config_cl.json"
+LOG_DIR = "/root/O-LoRA-main/logs/"
 INSTRUCTION_STRATEGY = "single"
-TASK_CONFIGS_DIR = '/workspace/O-LoRA/configs/auto_CL_configs'
+TASK_CONFIGS_DIR = '/root/O-LoRA-main/configs/auto_CL_configs'
 
 # task training and testing configs
 TASK_CONFIGS = {
-    "BoolQA_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "BoolQA_40_1")},
-    "COPA_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "COPA_40_1")},
-    "MultiRC_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "MultiRC_40_1")},
-    "QQP_40_1": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "QQP_40_1")},
-
+    "amazon": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "amazon")},
+    "dbpedia": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "dbpedia")},
+    "agnews": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "agnews")},
+    "yahoo": {"task_config_dir": os.path.join(TASK_CONFIGS_DIR, "yahoo")},
 }
-
 
 # general params settings
 LoRA_DIM = 8
 TRAIN_BATCH_SIZE = 8
-TEST_BATCH_SIZE = 8
+TEST_BATCH_SIZE = 128
 
 # gpu settings
-MAX_GPU_COUNT = 6
+MAX_GPU_COUNT = 8
 GPU_THRESHOLD = 0.8
 TOP_K = 2
 
 # params list for each task
 TASK_PARAMS = {
-    "BoolQA_40_1": [
-        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.1, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1}
+    "amazon": [
+        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1}
     ],
-    "COPA_40_1":  [
-        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1}
+    "dbpedia": [
+        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1}
     ],
-    "MultiRC_40_1": [
-        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1}
+    "agnews": [
+        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1}
     ],
-    "QQP_40_1": [
-        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1},
-        {"lamda_1": 0.5, "lamda_2": 0.3, "lr": 1e-3, "num_train_epochs": 1}
-    ]
+    "yahoo": [
+        {"lamda_1": 0.5, "lamda_2": 0, "lr": 1e-3, "num_train_epochs": 1}
+    ],
 }
 
 
@@ -217,6 +210,6 @@ class Engine:
 
 
 if __name__ == "__main__":
-    task_list = ["COPA_40_1", "QQP_40_1", "BoolQA_40_1"]
+    task_list = ["amazon", "dbpedia", "yahoo", "agnews"]
     engine = Engine(task_list)
     engine.run()

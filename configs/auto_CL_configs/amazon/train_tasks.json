@@ -1,8 +1,8 @@
 {
-    "TC":[
+    "SC":[
         {
             "sampling strategy": "full",
-            "dataset name": "yahoo"
+            "dataset name": "amazon"
         }
     ]
 }

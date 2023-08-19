@@ -2,77 +2,77 @@
     "SC": [
         {
             "sampling strategy": "full",
-            "dataset name": "amazon_100_1"
+            "dataset name": "amazon"
         },
         {
             "sampling strategy": "full",
-            "dataset name": "yelp_100_1"
+            "dataset name": "yelp"
         },
         {
             "sampling strategy": "full",
-            "dataset name": "SST-2_40_1" 
+            "dataset name": "SST-2" 
         },
         {
             "sampling strategy": "full",
-            "dataset name": "IMDB_40_1"
+            "dataset name": "IMDB"
         }
     ],
     "TC": [
         {
             "sampling strategy": "full",
-            "dataset name": "agnews_80_1"
+            "dataset name": "agnews"
         },
         {
             "sampling strategy": "full",
-            "dataset name": "dbpedia_280_1"
+            "dataset name": "dbpedia"
         },
         {
             "sampling strategy": "full",
-            "dataset name": "yahoo_200_1"
+            "dataset name": "yahoo"
         }        
     ],
     "NLI": [
         {
             "sampling strategy": "full",
-            "dataset name": "MNLI_60_1"
+            "dataset name": "MNLI"
         },
         {
             "sampling strategy": "full",
-            "dataset name": "RTE_40_1"
+            "dataset name": "RTE"
         },
         {
             "sampling strategy": "full",
-            "dataset name": "CB_60_1"
+            "dataset name": "CB"
         }       
     ],
     "QQP": [
         {
             "sampling strategy": "full",
-            "dataset name": "QQP_40_1"
+            "dataset name": "QQP"
         }   
     ],
     "WiC": [
         {
             "sampling strategy": "full",
-            "dataset name": "WiC_40_1"
+            "dataset name": "WiC"
         }   
     ],
     "MultiRC": [
         {
             "sampling strategy": "full",
-            "dataset name": "MultiRC_40_1"
+            "dataset name": "MultiRC"
         }   
     ],
     "COPA": [
         {
             "sampling strategy": "full",
-            "dataset name": "COPA_40_1"
+            "dataset name": "COPA"
         }   
     ],
     "BoolQA": [
         {
             "sampling strategy": "full",
-            "dataset name": "BoolQA_40_1"
+            "dataset name": "BoolQA"
         }   
     ]
 }
