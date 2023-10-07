@@ -13,7 +13,11 @@
         {
             "sampling strategy": "full",
             "dataset name": "yahoo"
-        }        
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "agnews"
+        }      
     ],
     "NLI": [   
     ],

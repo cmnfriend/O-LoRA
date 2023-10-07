@@ -55,14 +55,14 @@ CMD_TEMPLATE = "CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 nohup deepspeed src/run_uie
 
 
 # IO settings
-DATA_DIR = "/root/CL_Benchmark"
-INIT_MODEL = "/root/MODELS/t5-large"
-RESULT_FILE = "/root/O-LoRA-main/autoCL_result.txt"
-MODEL_OUTPUT_DIR = "/root/AutoCL_MODELS/"
-INSTRUCTION_FILE = "/root/O-LoRA-main/configs/instruction_config_cl.json"
-LOG_DIR = "/root/O-LoRA-main/logs/"
+DATA_DIR = "./CL_Benchmark"
+INIT_MODEL = "t5-large"
+RESULT_FILE = "./results_files/order3.txt"
+MODEL_OUTPUT_DIR = "./MODELS/order3"
+INSTRUCTION_FILE = "./configs/instruction_config_cl.json"
+LOG_DIR = "./logs/order3"
 INSTRUCTION_STRATEGY = "single"
-TASK_CONFIGS_DIR = '/root/O-LoRA-main/configs/auto_CL_configs'
+TASK_CONFIGS_DIR = './configs/auto_CL_configs'
 
 # task training and testing configs
 TASK_CONFIGS = {
@@ -210,6 +210,6 @@ class Engine:
 
 
 if __name__ == "__main__":
-    task_list = ["amazon", "dbpedia", "yahoo", "agnews"]
+    task_list = ["yahoo", "amazon", "agnews", "dbpedia"]
     engine = Engine(task_list)
     engine.run()
