@@ -1,29 +1,45 @@
 # O-LoRA
 
-## Tutorial
+- This repo releases our implementation for the O-LoRA model.
+- It is built based on the pretrained T5-large model, and finetuned on our data.
 
-1. Install
+
+## Setup
+
+You can install the required libraries by running 
 
 ```
-bash setup.sh
-```
-
-2. Run
-
-You can reproduce our results with 8 NVIDIA GeForce RTX 3090s.
-Please make sure you have 8 GPUs available during the experiments.
-
-for order 1:
-```
-python engine_order1.py
+pip install -r requirements.txt
 ```
 
-for order 2:
+You are also required to download the t5-large model from huggingface, and put it to the folder named ```initial_model```.
+
+
+## Training and Evaluation
+
+You can reproduce our experiments of order 1 & 2 & 3 by simply running
+
+order1:
+
 ```
-python engine_order2.py
+bash scripts/order_1.sh> logs_and_outputs/order_1/logs/train_and_infer.log 2>&1 &
 ```
 
-for order 3:
+order2:
+
 ```
-python engine_order3.py
+bash scripts/order_2.sh> logs_and_outputs/order_2/logs/train_and_infer.log 2>&1 &
 ```
+
+order3:
+
+```
+bash scripts/order_3.sh> logs_and_outputs/order_3/logs/train_and_infer.log 2>&1 &
+```
+
+The model you have trained will be saved in ```logs_and_outputs/order_1(2 or 3)/outputs```.
+
+The result of each task will be saved in ```logs_and_outputs/order_1(2 or 3)/outputs/TASK_NAME/predict_results.json```.
+
+You can also check the logs during training and infering in  ```logs_and_outputs/order_1(2 or 3)/logs/train_and_infer.log```
+

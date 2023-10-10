@@ -96,30 +96,17 @@ class UIETrainer(Seq2SeqTrainer):
                         orthogonal_loss += torch.abs(torch.mm(param, param_.T)).sum() # [r * dim] * [dim * r]
                         break # target modules have been matched
 
-        bias_loss = 0.
-        # # bias from lora_A/B to lorapre_A/B
-        # for name, param in self.model.named_parameters():
-        #     if "lora_A" in name:
-        #         for name_, param_ in self.model.named_parameters():
-        #             if "lorapre_A" in name_ and name.split("lora_A")[0] == name_.split("lorapre_A")[0]:
-        #                 bias_loss += torch.norm((param - param_), p = 2)
-        #                 break # target modules have been matched
-        #     elif "lora_B" in name:
-        #         for name_, param_ in self.model.named_parameters():
-        #             if "lorapre_B" in name_ and name.split("lora_B")[0] == name_.split("lorapre_B")[0]:
-        #                 bias_loss += torch.norm((param - param_), p = 2) 
-        #                 break # target modules have been matched
-
         # l2-normalization for loranew_A/B
+        l2_loss = 0.
         for name, param in self.model.named_parameters():
             if "loranew_" in name:
-                bias_loss += torch.norm(param, p=2)
+                l2_loss += torch.norm(param, p=2)
 
         lamda_1 = self.args.lamda_1
         lamda_2 = self.args.lamda_2
 
-        logger.info(f"orthogonal_loss: {orthogonal_loss.item()}; bias_loss: {bias_loss.item()}; accuracy_loss: {loss.item()}; λ1: {lamda_1}; λ2: {lamda_2}")
-        loss = loss + orthogonal_loss * lamda_1 + bias_loss * lamda_2
+        logger.info(f"orthogonal_loss: {orthogonal_loss.item()}; l2_loss: {l2_loss.item()}; accuracy_loss: {loss.item()}; λ1: {lamda_1}; λ2: {lamda_2}")
+        loss = loss + orthogonal_loss * lamda_1 + l2_loss * lamda_2
         ######################################################################
 
         if self.do_grad_scaling:

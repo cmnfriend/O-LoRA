@@ -46,9 +46,6 @@ from transformers.file_utils import is_offline_mode
 from transformers.trainer_utils import get_last_checkpoint
 from peft import get_peft_config, get_peft_model, LoraConfig, TaskType, PeftModel, PeftConfig # add
 
-from model.bloom import BloomForCausalLM_WithLoss
-from model.llama import LlamaForCausalLM_with_lossmask
-
 from uie_collator import DataCollatorForUIE
 from uie_dataset_lora import gen_cache_path
 
@@ -226,13 +223,6 @@ class DataTrainingArguments:
         default=False,
         metadata={"help": "whether to preappend dataset name before the task input."}
     )
-    # added for AutoCL
-    average_accuracy_list: str = field(
-        default='[]', metadata={"help": "average accuracy list for each step."}
-    )
-    sequential_results_file: str = field(
-        default=None, metadata={"help": "file to record sequential results"}
-    )
 
 
 @dataclass
@@ -324,26 +314,6 @@ def main():
     if 'adapter' in model_args.model_name_or_path: # load lora-config
         config = PeftConfig.from_pretrained(model_args.model_name_or_path)
         tokenizer = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
-    elif 'llama' in model_args.model_name_or_path.lower():
-        config = AutoConfig.from_pretrained(
-            model_args.model_name_or_path,
-            cache_dir=model_args.cache_dir,
-            revision=model_args.model_revision,
-            use_auth_token=True if model_args.use_auth_token else None,
-        )
-        config.bos_token_id = 1
-        config.eos_token_id = 2
-        config.pad_token_id = 1
-        tokenizer = transformers.LlamaTokenizer.from_pretrained(
-            model_args.model_name_or_path,
-            cache_dir = model_args.cache_dir,
-            use_fast = model_args.use_fast_tokenizer,
-            revision = model_args.model_revision,
-            use_auth_token = True if model_args.use_auth_token else None,
-        )
-        tokenizer.bos_token_id = 1
-        tokenizer.eos_token_id = 2
-        tokenizer.pad_token_id = 1
     else: # load original config
         config = AutoConfig.from_pretrained(
             model_args.config_name if model_args.config_name else model_args.model_name_or_path,
@@ -359,35 +329,11 @@ def main():
             use_auth_token=True if model_args.use_auth_token else None,
         )
 
-    if 'bloom' in model_args.model_name_or_path.lower():
-        model_class = BloomForCausalLM_WithLoss
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token
-        tokenizer.padding_side = 'left'
-    elif 'llama' in model_args.model_name_or_path.lower():  # add llama
-        model_class = LlamaForCausalLM_with_lossmask
-        tokenizer.padding_side = 'left'
-    else:
-        model_class = AutoModelForSeq2SeqLM
-
     if 'adapter' in model_args.model_name_or_path: # add lora-adapter to the original model
-        model = model_class.from_pretrained(config.base_model_name_or_path)
+        model = AutoModelForSeq2SeqLM.from_pretrained(config.base_model_name_or_path)
         model = PeftModel.from_pretrained(model, model_args.model_name_or_path)
-    elif 'llama' in model_args.model_name_or_path.lower():
-        model = model_class.from_pretrained(
-            model_args.model_name_or_path,
-            from_tf=bool(".ckpt" in model_args.model_name_or_path),
-            config=config,
-            cache_dir=model_args.cache_dir,
-            revision=model_args.model_revision,
-            use_auth_token=True if model_args.use_auth_token else None
-        )
-        peft_config = LoraConfig(
-            task_type=TaskType.SEQ_2_SEQ_LM, inference_mode=False, r=model_args.lora_dim, lora_alpha=32, lora_dropout=0.1
-        )
-        model = get_peft_model(model, peft_config)
     else:
-        model = model_class.from_pretrained(
+        model = AutoModelForSeq2SeqLM.from_pretrained(
             model_args.model_name_or_path,
             from_tf=bool(".ckpt" in model_args.model_name_or_path),
             config=config,
@@ -395,20 +341,12 @@ def main():
             revision=model_args.model_revision,
             use_auth_token=True if model_args.use_auth_token else None,
         )
-        # Turning the model into a LoRA-style one is a DEFAULT behavior.
-        # Some modification is expected to make these arguments optional.
-        # Fow now, just for the purpose of TESTING.
         peft_config = LoraConfig(
             task_type=TaskType.SEQ_2_SEQ_LM, inference_mode=False, r=model_args.lora_dim, lora_alpha=32, lora_dropout=0.1
         )
         model = get_peft_model(model, peft_config)
 
     model.resize_token_embeddings(len(tokenizer))
-
-    if 'llama' in model_args.model_name_or_path.lower():
-        model.generation_config.bos_token_id = 1
-        model.generation_config.eos_token_id = 2
-        model.generation_config.pad_token_id = 1
 
     # fix lora_A/B (bases of previous LoRA parameters, loaded in "load_adapter"[peft_momdel.py])
     # fine-tune loranew_A/B (initialized in "update_layer"[lora.py])
@@ -526,7 +464,6 @@ def main():
     all_metrics = {"run_name": training_args.run_name}
 
     # Training
-    # 训练epoch数，按照 num_train_epochs 传入，在trainer中解析
     if training_args.do_train:
         checkpoint = None
         if training_args.resume_from_checkpoint is not None:
@@ -564,8 +501,6 @@ def main():
     repetition_penalty = data_args.repetition_penalty
 
     if training_args.do_predict:
-        history_metrics_str = data_args.average_accuracy_list
-        history_metrics = json.loads(history_metrics_str)
         logger.info("*** Prediction ***")
         logger.info("*** Loading CheckPoint ***")
 
@@ -590,53 +525,6 @@ def main():
         trainer.log_metrics("predict", metrics)
         trainer.save_metrics("predict", metrics)
         all_metrics.update(metrics)
-
-        # update history metrics and out to data_args.sequential_results_file
-        out_dir, results_file_name = os.path.split(data_args.sequential_results_file)
-        # create an identify file for output dir as a Lock
-        identify_file_path = os.path.join(out_dir, "identify_for_cl")
-        while os.path.exists(identify_file_path):
-            time.sleep(1)
-        logger.info("Create lock file {}, start out to {}".format(identify_file_path, data_args.sequential_results_file))
-        with open(identify_file_path, 'w') as file:
-            pass
-
-        # format of output
-        # {
-        #     "training_params": {},
-        #     "average_metrics": [0.5, 0.1],
-        #     "test_result": [
-        #         ['task_1', 50],
-        #         ['task_2', 43]
-        #     ],
-        #     "model_save_path": "path/to/model"
-        # }
-
-        output_info = {
-            "training_params": {
-                "lamda_1": training_args.lamda_1,
-                "lamda_2": training_args.lamda_2,
-                "learning_rate": training_args.learning_rate,
-                "train_bs": training_args.per_device_train_batch_size
-            },
-            "average_metrics": history_metrics,
-            "test_result": [],
-            "model_save_path": os.path.join(training_args.output_dir, 'adapter')
-        }
-
-        for key, value in metrics.items():
-            if "predict_exact_match_for_" in key:
-                task_name = key.split("predict_exact_match_for_")[1]
-                output_info["test_result"].append([task_name, value])
-        task_metrics = [item[1] for item in output_info["test_result"]]
-        average_metrics = sum(task_metrics) / len(task_metrics)
-        output_info["average_metrics"].append(average_metrics)
-
-        with open(data_args.sequential_results_file, "a+") as f:
-            f.write(json.dumps(output_info) + "\n")
-
-        os.remove(identify_file_path)
-        logger.info("Clear lock file {}, finish out to {}".format(identify_file_path, data_args.sequential_results_file))
 
     return results
 

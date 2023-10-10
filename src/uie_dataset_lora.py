@@ -74,11 +74,13 @@ class UIEConfig(datasets.BuilderConfig):
             num_examples=None,
             max_num_instances_per_task=None,
             max_num_instances_per_eval_task=None,
+            over_sampling=None,
             **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.data_dir = data_dir
         self.num_examples = num_examples
+        self.over_sampling = over_sampling
         self.instructions = self._parse_instruction(instruction_file)
         self.task_configs = self._parse_task_config(task_config_dir)
         self.instruction_strategy = instruction_strategy
@@ -251,9 +253,14 @@ class UIEInstructions(datasets.GeneratorBasedBuilder):
         else:
             return random.choice(task_instructions)
 
+
     def _sampling_dataset(self, instances, sampling_strategy, max_num_instances):
         if sampling_strategy == 'random' and max_num_instances is not None and max_num_instances >= 0:
             instances = instances[:max_num_instances]
+        if max_num_instances!=None and self.config.over_sampling and len(instances) < max_num_instances:
+            origin_instances = instances.copy()
+            while len(instances) < max_num_instances:
+                instances.append(random.choice(origin_instances))
 
         return instances
 
