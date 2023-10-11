@@ -3,6 +3,8 @@
 - This repo releases our implementation for the O-LoRA model.
 - It is built based on the pretrained T5-large model, and finetuned on our data.
 
+![image_text](https://github.com/cmnfriend/O-LoRA/blob/main/data/O-LoRA.jpg)
+
 
 ## Setup
 
