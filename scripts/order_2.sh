@@ -19,7 +19,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --master_port $port src/run_uie_l
    --instruction_strategy single \
    --output_dir logs_and_outputs/order_2/outputs/1-dbpedia \
    --per_device_train_batch_size 8 \
-   --per_device_eval_batch_size 256 \
+   --per_device_eval_batch_size 128 \
    --gradient_accumulation_steps 1 \
    --learning_rate 1e-03 \
    --num_train_epochs 1 \
@@ -55,7 +55,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --master_port $port src/run_uie_l
    --instruction_strategy single \
    --output_dir logs_and_outputs/order_2/outputs/2-amazon \
    --per_device_train_batch_size 8 \
-   --per_device_eval_batch_size 256 \
+   --per_device_eval_batch_size 128 \
    --gradient_accumulation_steps 1 \
    --learning_rate 1e-03 \
    --num_train_epochs 1 \
@@ -91,7 +91,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --master_port $port src/run_uie_l
    --instruction_strategy single \
    --output_dir logs_and_outputs/order_2/outputs/3-agnews \
    --per_device_train_batch_size 8 \
-   --per_device_eval_batch_size 256 \
+   --per_device_eval_batch_size 128 \
    --gradient_accumulation_steps 1 \
    --learning_rate 1e-03 \
    --num_train_epochs 1 \
@@ -127,7 +127,7 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 deepspeed --master_port $port src/run_uie_l
    --instruction_strategy single \
    --output_dir logs_and_outputs/order_2/outputs/4-yahoo \
    --per_device_train_batch_size 8 \
-   --per_device_eval_batch_size 256 \
+   --per_device_eval_batch_size 128 \
    --gradient_accumulation_steps 1 \
    --learning_rate 1e-03 \
    --num_train_epochs 1 \
