@@ -51,6 +51,7 @@ from uie_dataset_lora import gen_cache_path
 
 from uie_trainer_lora import UIETrainer, DenserEvalCallback, skip_instructions
 from compute_metrics import compute_metrics, compute_grouped_metrics
+from model.llama import LlamaForCausalLM_with_lossmask
 
 # off wandb
 os.environ['WANDB_DISABLED'] = "True"
@@ -313,7 +314,36 @@ def main():
     # download model & vocab.
     if 'adapter' in model_args.model_name_or_path: # load lora-config
         config = PeftConfig.from_pretrained(model_args.model_name_or_path)
-        tokenizer = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
+        if 'llama' in model_args.model_name_or_path.lower():
+            tokenizer = transformers.LlamaTokenizer.from_pretrained(config.base_model_name_or_path)
+            config.bos_token_id = 1
+            config.eos_token_id = 2
+            config.pad_token_id = 1
+            tokenizer.bos_token_id = 1
+            tokenizer.eos_token_id = 2
+            tokenizer.pad_token_id = 1
+        else:
+            tokenizer = AutoTokenizer.from_pretrained(config.base_model_name_or_path)
+    elif 'llama' in model_args.model_name_or_path.lower():
+        config = AutoConfig.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None,
+        )
+        config.bos_token_id = 1
+        config.eos_token_id = 2
+        config.pad_token_id = 1
+        tokenizer = transformers.LlamaTokenizer.from_pretrained(
+            model_args.model_name_or_path,
+            cache_dir = model_args.cache_dir,
+            use_fast = model_args.use_fast_tokenizer,
+            revision = model_args.model_revision,
+            use_auth_token = True if model_args.use_auth_token else None,
+        )
+        tokenizer.bos_token_id = 1
+        tokenizer.eos_token_id = 2
+        tokenizer.pad_token_id = 1
     else: # load original config
         config = AutoConfig.from_pretrained(
             model_args.config_name if model_args.config_name else model_args.model_name_or_path,
@@ -329,11 +359,30 @@ def main():
             use_auth_token=True if model_args.use_auth_token else None,
         )
 
+    if 'llama' in model_args.model_name_or_path.lower():  # add llama
+        model_class = LlamaForCausalLM_with_lossmask
+        tokenizer.padding_side = 'left'
+    else: 
+        model_class = AutoModelForSeq2SeqLM
+
     if 'adapter' in model_args.model_name_or_path: # add lora-adapter to the original model
-        model = AutoModelForSeq2SeqLM.from_pretrained(config.base_model_name_or_path)
+        model = model_class.from_pretrained(config.base_model_name_or_path)
         model = PeftModel.from_pretrained(model, model_args.model_name_or_path)
+    elif 'llama' in model_args.model_name_or_path.lower():
+        model = model_class.from_pretrained(
+            model_args.model_name_or_path,
+            from_tf=bool(".ckpt" in model_args.model_name_or_path),
+            config=config,
+            cache_dir=model_args.cache_dir,
+            revision=model_args.model_revision,
+            use_auth_token=True if model_args.use_auth_token else None
+        )
+        peft_config = LoraConfig(
+            task_type=TaskType.CAUSAL_LM, inference_mode=False, r=model_args.lora_dim, lora_alpha=32, lora_dropout=0.1
+        )
+        model = get_peft_model(model, peft_config)
     else:
-        model = AutoModelForSeq2SeqLM.from_pretrained(
+        model = model_class.from_pretrained(
             model_args.model_name_or_path,
             from_tf=bool(".ckpt" in model_args.model_name_or_path),
             config=config,
@@ -348,6 +397,11 @@ def main():
 
     model.resize_token_embeddings(len(tokenizer))
 
+    if 'llama' in model_args.model_name_or_path.lower():
+        model.generation_config.bos_token_id = 1
+        model.generation_config.eos_token_id = 2
+        model.generation_config.pad_token_id = 1
+        
     # fix lora_A/B (bases of previous LoRA parameters, loaded in "load_adapter"[peft_momdel.py])
     # fine-tune loranew_A/B (initialized in "update_layer"[lora.py])
     # optional: lora_A/B is trainable but should not move too far from lorapre_A/B
