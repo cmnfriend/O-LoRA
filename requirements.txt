@@ -1,6 +1,6 @@
-transformers==4.26.1
+transformers==4.28.0
 datasets==1.17.0
-deepspeed==0.9.5
+deepspeed==0.10.0
 fairscale==0.4.5
 ipython==8.14.0
 nltk==3.8.1
