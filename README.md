@@ -69,3 +69,14 @@ order3:
 bash scripts_llama/order_3.sh> logs_and_outputs_llama/order_3/logs/train_and_infer.log 2>&1 &
 ```
 
+## Citation
+```latex
+@article{wang2023orthogonal,
+  title={Orthogonal Subspace Learning for Language Model Continual Learning},
+  author={Wang, Xiao and Chen, Tianze and Ge, Qiming and Xia, Han and Bao, Rong and Zheng, Rui and Zhang, Qi and Gui, Tao and Huang, Xuanjing},
+  journal={arXiv preprint arXiv:2310.14152},
+  year={2023}
+}
+```
+
+
