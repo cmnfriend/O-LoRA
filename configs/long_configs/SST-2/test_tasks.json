@@ -1,0 +1,54 @@
+{
+    "SC": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "amazon"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "yelp"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "IMDB"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "SST-2"
+        }
+    ],
+    "TC": [     
+    ],
+    "NLI": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "MNLI"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "CB"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "RTE"
+        } 
+    ],
+    "QQP": [  
+        {
+            "sampling strategy": "full",
+            "dataset name": "QQP"
+        } 
+    ],
+    "WiC": [ 
+    ],
+    "MultiRC": [ 
+    ],
+    "COPA": [ 
+        {
+            "sampling strategy": "full",
+            "dataset name": "COPA"
+        } 
+    ],
+    "BoolQA": [
+    ]
+}

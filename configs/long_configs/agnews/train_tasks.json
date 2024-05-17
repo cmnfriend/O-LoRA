@@ -1,0 +1,22 @@
+{
+    "SC": [
+    ],
+    "TC": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "agnews"
+        } 
+    ],
+    "NLI": [   
+    ],
+    "QQP": [ 
+    ],
+    "WiC": [ 
+    ],
+    "MultiRC": [ 
+    ],
+    "COPA": [
+    ],
+    "BoolQA": [
+    ]
+}

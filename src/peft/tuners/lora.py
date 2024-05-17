@@ -434,8 +434,6 @@ class LoraLayer:
         self.lora_dropout = nn.ModuleDict({})
         self.lora_A = nn.ModuleDict({})
         self.lora_B = nn.ModuleDict({})
-        # self.lorapre_A = nn.ModuleDict({}) # modified
-        # self.lorapre_B = nn.ModuleDict({}) # modified
         self.loranew_A = nn.ModuleDict({}) # modified
         self.loranew_B = nn.ModuleDict({}) # modified
         # For Embedding layer
@@ -462,8 +460,6 @@ class LoraLayer:
             self.loranew_B.update(nn.ModuleDict({adapter_name: nn.Linear(r, self.out_features, bias=False)})) # modified
             self.lora_A.update(nn.ModuleDict({adapter_name: nn.Linear(self.in_features, r_sum, bias=False)})) # modified
             self.lora_B.update(nn.ModuleDict({adapter_name: nn.Linear(r_sum, self.out_features, bias=False)})) # modified
-            # self.lorapre_A.update(nn.ModuleDict({adapter_name: nn.Linear(self.in_features, r_sum, bias=False)})) # modified
-            # self.lorapre_B.update(nn.ModuleDict({adapter_name: nn.Linear(r_sum, self.out_features, bias=False)})) # modified
             self.scaling[adapter_name] = lora_alpha / r
         if init_lora_weights:
             self.reset_lora_parameters(adapter_name)
@@ -508,11 +504,6 @@ class LoraLayer:
         if adapter_name in self.loranew_A.keys(): 
             nn.init.kaiming_uniform_(self.loranew_A[adapter_name].weight, a=math.sqrt(5))
             nn.init.zeros_(self.loranew_B[adapter_name].weight)
-
-        # # modified
-        # if adapter_name in self.lorapre_A.keys(): 
-        #     nn.init.zeros_(self.lorapre_A[adapter_name].weight)
-        #     nn.init.zeros_(self.lorapre_B[adapter_name].weight)
 
 
 class Linear(nn.Linear, LoraLayer):

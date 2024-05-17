@@ -1,0 +1,30 @@
+{
+    "SC": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "amazon"
+        },
+        {
+            "sampling strategy": "full",
+            "dataset name": "yelp"
+        }
+    ],
+    "TC": [     
+    ],
+    "NLI": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "MNLI"
+        } 
+    ],
+    "QQP": [  
+    ],
+    "WiC": [ 
+    ],
+    "MultiRC": [ 
+    ],
+    "COPA": [ 
+    ],
+    "BoolQA": [
+    ]
+}

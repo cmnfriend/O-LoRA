@@ -1,0 +1,22 @@
+{
+    "SC": [
+        {
+            "sampling strategy": "full",
+            "dataset name": "SST-2"
+        }
+    ],
+    "TC": [
+    ],
+    "NLI": [   
+    ],
+    "QQP": [ 
+    ],
+    "WiC": [ 
+    ],
+    "MultiRC": [ 
+    ],
+    "COPA": [
+    ],
+    "BoolQA": [
+    ]
+}
