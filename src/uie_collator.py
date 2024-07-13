@@ -149,8 +149,8 @@ class DataCollatorForUIE:
             task_input = self.tokenizer.bos_token + instruction
             label = label + self.tokenizer.eos_token
 
-            tokenized_input = self.tokenizer(task_input)["input_ids"]
-            tokenized_label = self.tokenizer(label)["input_ids"]
+            tokenized_input = self.tokenizer(task_input, add_special_tokens=False)["input_ids"]
+            tokenized_label = self.tokenizer(label, add_special_tokens=False)["input_ids"]
 
             # (input) for inference, (input + label) for training
             if instance['subset'] in ['dev', 'test']:
