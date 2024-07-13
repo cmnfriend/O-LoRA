@@ -98,7 +98,7 @@ class LlamaForCausalLM_with_lossmask(LlamaForCausalLM):
             loss = F.cross_entropy(shift_logits.view(batch_size * seq_length, vocab_size), shift_labels.view(batch_size * seq_length),reduction='none')
             if loss_mask != None:
                 loss = loss * loss_mask[..., :-1].contiguous().view(-1)
-            loss = loss.sum()/loss_mask.sum()
+            loss = loss.sum()/(loss_mask.sum()+1e-8)
 
         if not return_dict:
             output = (logits,) + outputs[1:]
